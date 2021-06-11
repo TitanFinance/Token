@@ -13,13 +13,14 @@ contract LockContract is Ownable {
 
     uint256 public _startedLockedTime;
     uint256 public _lockedPeriodForStaking = 4 weeks;
-    uint256 public _lockedPeriodForTeamAndDevelopment = 6 * 4 weeks;
+    uint256 public _lockedPeriodForTeamAndDevelopmentAndMarketing = 6 * 4 weeks;
     uint256 public _lockedPeriodForReserve = 12 * 4 weeks;
     uint256 public _lockedPeriodLP = 12 * 4 weeks;
 
     uint256 public _stakignAmount = 10 * 10**9 * 10**9;
     uint256 public _teamAmount = 5 * 10**9 * 10**9;
     uint256 public _developAmount = 5 * 10**9 * 10**9;
+    uint256 public _marketingAmount = 5 * 10**9 * 10**9;
     uint256 public _reserveAmount = 25 * 10**9 * 10**9;
 
     address public _tokenAddress;
@@ -28,6 +29,7 @@ contract LockContract is Ownable {
     address public _stakingAddress;
     address public _teamAddress;
     address public _developAddress;
+    address public _marketingAddress;
     address public _reserveAddress;
 
     constructor() {}
@@ -58,6 +60,10 @@ contract LockContract is Ownable {
         _developAddress = developAddress;
     }
 
+    function setMarketingAddress(address marketingAddress) external onlyOwner {
+        _marketingAddress = marketingAddress;
+    }
+
     function setReserveAddress(address reserveAddress) external onlyOwner {
         _reserveAddress = reserveAddress;
     }
@@ -83,7 +89,9 @@ contract LockContract is Ownable {
         require(_teamAddress != address(0) && _teamAddress == _msgSender());
         require(
             block.timestamp >
-                _startedLockedTime.add(_lockedPeriodForTeamAndDevelopment)
+                _startedLockedTime.add(
+                    _lockedPeriodForTeamAndDevelopmentAndMarketing
+                )
         );
         uint256 balance = IBEP20(_tokenAddress).balanceOf(address(this));
         if (_teamAmount > balance) {
@@ -100,7 +108,9 @@ contract LockContract is Ownable {
         );
         require(
             block.timestamp >
-                _startedLockedTime.add(_lockedPeriodForTeamAndDevelopment)
+                _startedLockedTime.add(
+                    _lockedPeriodForTeamAndDevelopmentAndMarketing
+                )
         );
         uint256 balance = IBEP20(_tokenAddress).balanceOf(address(this));
         if (_developAmount > balance) {
@@ -108,6 +118,25 @@ contract LockContract is Ownable {
         }
         IBEP20(_tokenAddress).transfer(_msgSender(), _developAmount);
         _developAmount = 0;
+    }
+
+    function withdrawMarketingToken() external {
+        require(_tokenAddress != address(0));
+        require(
+            _marketingAddress != address(0) && _marketingAddress == _msgSender()
+        );
+        require(
+            block.timestamp >
+                _startedLockedTime.add(
+                    _lockedPeriodForTeamAndDevelopmentAndMarketing
+                )
+        );
+        uint256 balance = IBEP20(_tokenAddress).balanceOf(address(this));
+        if (_marketingAmount > balance) {
+            _marketingAmount = balance;
+        }
+        IBEP20(_tokenAddress).transfer(_msgSender(), _marketingAmount);
+        _marketingAmount = 0;
     }
 
     function withdrawReserveToken() external {
